@@ -12,14 +12,19 @@
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
-    self = [super initWithFrame:frame];
-    if (self)
+    if (self = [super initWithFrame:frame])
     {
+        self.currentSelectionView = [UIView new];
+        self.currentSelectionView.backgroundColor = [UIColor clearColor];
+        self.currentSelectionView.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.contentView addSubview:self.currentSelectionView];
+        
         self.textLabel = [UILabel new];
         self.textLabel.translatesAutoresizingMaskIntoConstraints = NO;
         self.textLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:14];
         self.textLabel.backgroundColor = [UIColor clearColor];
         [self.contentView addSubview:self.textLabel];
+        
         self.imageView = [UIImageView new];
         self.imageView.translatesAutoresizingMaskIntoConstraints = NO;
         [self.contentView addSubview:self.imageView];
@@ -29,13 +34,12 @@
         self.imageView.layer.cornerRadius = 8.0;
         self.imageView.layer.masksToBounds = YES;
         self.imageView.clipsToBounds = YES;
+        
         self.starImageView = [UIImageView new];
         self.starImageView.translatesAutoresizingMaskIntoConstraints = NO;
         [self.contentView addSubview:self.starImageView];
-        //self.starImageView.hidden=YES;
-
-        
     }
+    
     return self;
 }
 
@@ -54,9 +58,19 @@
     self.textLabel.highlightedTextColor = [self inversedTintColor];
 }
 
+- (void)setIsItemSelected:(BOOL)isItemSelected
+{
+    _isItemSelected = isItemSelected;
+    
+    UIColor *selectionColor = isItemSelected ? [UIColor lightGrayColor] : [UIColor clearColor];
+    
+    self.currentSelectionView.backgroundColor = selectionColor;
+}
+
 - (void)setSelected:(BOOL)selected
 {
     [super setSelected:selected];
+    
     if (selected)
     {
         self.imageView.tintColor = [self inversedTintColor];
@@ -66,21 +80,6 @@
         self.imageView.tintColor = self.tintColor;
     }
 }
-
-/*
-- (void)setSelected:(BOOL)selected
-{
-    if (selected)
-    {
-        self.tintColor = [UIColor colorWithWhite:0.2 alpha:1.0];
-    }
-    else
-    {
-        self.tintColor = nil;
-    }
-    [super setSelected:selected];
-}
- */
 
 - (void)setAlignment:(RWDropdownMenuCellAlignment)alignment
 {
@@ -106,7 +105,9 @@
 {
     [super updateConstraints];
     [self.contentView removeConstraints:self.contentView.constraints];
-    NSDictionary *views = @{@"text":self.textLabel, @"image":self.imageView, @"star":self.starImageView};
+    
+    NSDictionary *views = @{@"selection": self.currentSelectionView, @"text":self.textLabel, @"image":self.imageView, @"star":self.starImageView};
+    NSDictionary *metrics = @{@"selectionWidth": @4, @"selectionMarginLeft": @4, @"starTrailingRight": @4};
     
     // vertical centering
     for (UIView *v in [views allValues])
@@ -123,28 +124,36 @@
     
     // horizontal
     NSString *vfs = nil;
-    switch (self.alignment) {
+    NSString *heightVfs = @"V:|[selection]|";
+    
+    switch (self.alignment)
+    {
         case RWDropdownMenuCellAlignmentCenter:
-            vfs = @"H:|[text]|";
+            
+            vfs = @"H:|-(selectMarginLeft)-[selection(selectionWidth)][text]|";
+            
             break;
             
         case RWDropdownMenuCellAlignmentLeft:
-            vfs = @"H:|-[image]-(15)-[text]";
-            [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.imageView attribute:NSLayoutAttributeLeading relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeLeading multiplier:1.0 constant:margin]];
-            [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.starImageView attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:-margin]];
+            
+            vfs = @"H:|-(selectionMarginLeft)-[selection(selectionWidth)]-[image]-[text][star]-(starTrailingRight)-|";
+            
             break;
             
         case RWDropdownMenuCellAlignmentRight:
-            vfs = @"H:|[text]-(15)-[image]";
-            [self.contentView addConstraint:[NSLayoutConstraint constraintWithItem:self.imageView attribute:NSLayoutAttributeTrailing relatedBy:NSLayoutRelationEqual toItem:self.contentView attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:-margin]];
+            
+            vfs = @"H:|-(selectionMarginLeft)-[selection(selectionWidth)][text]-[image]-[star]-(starTrailingRight)-|";
+            
             break;
             
         default:
+            
             break;
     }
-
-    [self.imageView setContentHuggingPriority:UILayoutPriorityDefaultHigh forAxis:UILayoutConstraintAxisHorizontal]; 
-    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:vfs options:0 metrics:nil views:views]];
+    
+    [self.imageView setContentHuggingPriority:UILayoutPriorityDefaultHigh forAxis:UILayoutConstraintAxisHorizontal];
+    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:vfs options:0 metrics:metrics views:views]];
+    [self.contentView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:heightVfs options:0 metrics:metrics views:views]];
 }
 
 @end

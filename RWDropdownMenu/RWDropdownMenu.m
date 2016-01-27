@@ -50,7 +50,7 @@
 
 @implementation RWDropdownMenuItem
 
-+ (instancetype)itemWithText:(NSString *)text image:(UIImage *)image isFavorite:(BOOL)showFavorite withFavoriteImage:(NSString*)favoriteImageName action:(void (^)(void))action
++ (instancetype)itemWithText:(NSString *)text image:(UIImage *)image isFavorite:(BOOL)showFavorite withFavoriteImage:(NSString*)favoriteImageName isItemSelected:(BOOL)isItemSelected action:(void (^)(void))action
 {
     RWDropdownMenuItem *item = [self new];
     item.text = text;
@@ -58,6 +58,7 @@
     item.action = action;
     item.isFavorite = showFavorite;
     item.favoriteImageName = favoriteImageName;
+    item.isItemSelected = isItemSelected;
     return item;
 }
 
@@ -269,7 +270,6 @@ static NSString * const CellId = @"RWDropdownMenuCell";
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     RWDropdownMenuCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:CellId forIndexPath:indexPath];
-    
     cell.tintColor = self.view.tintColor;
     
     RWDropdownMenuItem *item = self.items[indexPath.row];
@@ -277,9 +277,14 @@ static NSString * const CellId = @"RWDropdownMenuCell";
     cell.imageView.image = item.image;
     cell.alignment = self.alignment;
     cell.starImageView.hidden = !item.isFavorite;
-    if (item.isFavorite) {
+    cell.isItemSelected = item.isItemSelected;
+    
+    if (item.isFavorite)
+    {
         cell.starImageView.image = [UIImage imageNamed:item.favoriteImageName];
-    }else{
+    }
+    else
+    {
         cell.starImageView.image = nil;
     }
     
@@ -359,16 +364,16 @@ static NSString * const CellId = @"RWDropdownMenuCell";
                        completion:(void (^)(void))completion
 {
     RWDropdownMenu *menu = [[RWDropdownMenu alloc] initWithNibName:nil bundle:nil];
-
+    
     UIBarButtonItem *navBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:title style:UIBarButtonItemStylePlain target:menu action:@selector(dismiss:)];
     [navBarButtonItem setTitleTextAttributes:@{NSForegroundColorAttributeName: [UIColor whiteColor], NSFontAttributeName: font} forState:UIControlStateNormal];
     [navBarButtonItem setTitleTextAttributes:@{NSForegroundColorAttributeName: [UIColor whiteColor], NSFontAttributeName: font} forState:UIControlStateHighlighted];
-
+    
     menu.style = style;
     menu.alignment = align;
     menu.items = items;
     menu.navBarButtonItem = navBarButtonItem;
-
+    
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:menu];
     nav.view.tintColor = menu.view.tintColor;
     nav.navigationBar.barStyle = UIBarStyleBlack;
@@ -377,10 +382,10 @@ static NSString * const CellId = @"RWDropdownMenuCell";
     [nav.navigationBar setShadowImage:[UIImage new]];
     nav.navigationBar.userInteractionEnabled = YES;
     [nav.navigationBar addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:menu action:@selector(dismiss:)]];
-
+    
     nav.transitioningDelegate = menu;
     nav.modalPresentationStyle = UIModalPresentationCustom;
-
+    
     [viewController presentViewController:nav animated:YES completion:^{
         if (completion)
         {
@@ -424,6 +429,7 @@ static NSString * const CellId = @"RWDropdownMenuCell";
 
 + (void)presentInPopoverFromBarButtonItem:(UIBarButtonItem *)barButtonItem
                                 withItems:(NSArray *)items
+                                    style:(RWDropdownMenuStyle)style
                                completion:(void (^)(void))completion
 {
     RWDropdownMenuPopoverHelper *helper = [RWDropdownMenuPopoverHelper sharedInstance];
@@ -435,7 +441,7 @@ static NSString * const CellId = @"RWDropdownMenuCell";
     }
     
     RWDropdownMenu *menu = [[RWDropdownMenu alloc] initWithNibName:nil bundle:nil];
-    menu.style = RWDropdownMenuStyleWhite;
+    menu.style = style;
     menu.alignment = RWDropdownMenuCellAlignmentLeft;
     menu.items = items;
     menu.navBarImage = nil;
